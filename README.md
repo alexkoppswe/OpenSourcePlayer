@@ -1,6 +1,6 @@
 # 🎬 Open Source Media Player
 
-A customizable and feature-rich media player for web applications.
+A customizable and feature-rich media player for web applications. Without any dependencies and modular design.
 
 ## 🚀 Features
 
@@ -8,14 +8,15 @@ A customizable and feature-rich media player for web applications.
 - **Subtitles Support**: Easily add and manage subtitles via the `data-subtitle-src` attribute in the video tag.
 - **Modular**
 - **Addons**
+- **Context Menu**
 - **Picture-in-Picture Mode**
 - **Fullscreen Mode**
 - **Cinematic Mode**: Darkense the page background.
 - **Settings Menu**: Customizable settings.
+- Svg icons or unicode icons as fallback.
 
 ## Images
-![Open Source Media Player](assets/player-screenshot.png)
-
+![osp](https://github.com/user-attachments/assets/9017d4ff-838a-49d2-ae00-fc01f181b530)
 
 ## 🛠️ Usage
 
@@ -79,7 +80,7 @@ Contributions are welcome!
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+This project is licensed under the GNU General Public License - see the LICENSE file for details.
 
 ---
 
