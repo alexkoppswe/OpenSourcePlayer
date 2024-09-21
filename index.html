@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Video Player</title>
+  <link rel="preload" href="css/OpenSourcePlayer.css" as="style">
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="css/OpenSourcePlayer.css" defer>
+  <link rel="shortcut icon" href="assets/favicon.ico" type="image/x-icon">
+</head>
+<body>
+  
+  <main>
+    <div class="osp-player">
+      <!-- Subtitles and segments for MediaSource tags. -->
+      <!--<video data-subtitle-src="../subtitles.vtt" data-segments="">-->
+      <video nodownload loading="lazy">
+        <source src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4" type="video/mp4" crossorigin="anonymous">
+        Sorry, Your browser does not support html video. Try updating it.
+      </video>
+    </div>
+  </main>
+
+  <footer>CopyLeft</footer>
+
+  <script type="module" src="modules/preload.js" crossorigin="use-credentials" async></script>
+  <script type="module" src="script.js" crossorigin="use-credentials"></script>
+</body>
+</html>
