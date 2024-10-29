@@ -4,11 +4,11 @@
   1. Initialize player function
   2. Video player setup function
   3. Audio player setup function
-  4. Load media function
-  5. Check media support function
+  4. Check media support function
   ================================ */
 
 import { setupVideoControls } from './controls.js';
+import { addEventListeners } from './eventListeners.js';
 
 // Global Configuration
 const config = {
@@ -19,23 +19,25 @@ const config = {
   useSubtitles: true,
   useSettings: true,
   useContextMenu: true,
-  useVerticalVidFill: true
+  useVerticalVidFill: true,
+  useCinematicMode: true
 };
 
 // Initialize player
 export async function initializePlayer() {
   try {
     const players = document.querySelectorAll('.osp-player');
-    players.forEach(player => {
+    players.forEach(async (player) => {
       const video = player.querySelector('video');
       const audio = player.querySelector('audio');
-  
+
       if (video) {
-        const hasSubtitles = video.hasAttribute('data-subtitle-src');
-        setupVideoControls(video, player, hasSubtitles);
+        const controls = await setupVideoControls(video, player);
+        await addEventListeners(video, player, controls);
         videoPlayerSetup(video);
       } else if (audio) {
-        setupVideoControls(audio, player, false);
+        const controls = await setupVideoControls(audio, player, false);
+        await addEventListeners(audio, player, controls);
         audioPlayerSetup(audio);
       }
     });
@@ -45,7 +47,7 @@ export async function initializePlayer() {
 }
 
 // Video player setup
-async function videoPlayerSetup(video) {
+export async function videoPlayerSetup(video) {
   if (!video) {
     console.error("Required video elements not found");
     return;
@@ -64,8 +66,6 @@ async function videoPlayerSetup(video) {
     source.setAttribute('src', videoSrc);
     video.appendChild(source);
     video.preload = 'metadata';
-  } else {
-    await loadMedia(video, source);
   }
 
   // Dynamic video playback from mediaSourceHelper.js
@@ -87,10 +87,6 @@ async function videoPlayerSetup(video) {
     }
   }
 
-  if (video.readyState >= 2) {
-    video.preload = 'auto';
-  }
-
   if (video.readyState === 0) {
     checkMediaSupport(video.querySelector('source[src]'));
   }
@@ -102,7 +98,7 @@ async function videoPlayerSetup(video) {
 }
 
 // Audio player setup
-async function audioPlayerSetup(audio) {
+export async function audioPlayerSetup(audio) {
   if (!audio) {
     console.error("Required audio elements not found");
     return;
@@ -118,43 +114,6 @@ async function audioPlayerSetup(audio) {
     source.setAttribute('src', audioSrc);
     audio.appendChild(source);
     audio.preload = 'metadata';
-  }
-}
-
-// Load media fallback function
-export async function loadMedia(video, media) {
-  if (!video || !media) {
-    console.error("Required video elements not found");
-    return;
-  }
-
-  try {
-    const isExternal = media.startsWith('http') || media.startsWith('https');
-    const response = await fetch(media);
-
-    if (!response.ok) {
-      throw new Error(`Failed to load media: ${response.status} ${response.statusText}`);
-    }
-
-    const contentType = response.headers.get('Content-Type');
-    if (!contentType.startsWith('video/')) {
-      throw new Error(`Invalid media content type: ${contentType}`);
-    }
-
-    const source = document.createElement('source');
-    source.setAttribute('src', media);
-
-    if (isExternal) {
-      source.setAttribute('type', contentType);
-    } else {
-      source.setAttribute('crossorigin', 'anonymous');
-    }
-
-    video.appendChild(source);
-    video.preload = 'metadata';
-
-  } catch (error) {
-    console.error("An error occurred while loading media:", error);
   }
 }
 

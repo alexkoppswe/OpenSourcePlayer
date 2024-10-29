@@ -72,7 +72,12 @@ export function toggleFullscreen(videoPlayerContainer) {
 }
 
 // Settings Menu
-export function toggleSettingsMenu(settingsMenu, settingsButton) {
+export function toggleSettingsMenu(video, settingsMenu, settingsButton) {
+  if (!config.useSettings) return;
+
+  const track = video.querySelector('track');
+  if (!track && !config.useCinematicMode) return;
+
   settingsMenu.classList.toggle('open');
   stateMachine.toggleState('settings', states.SETTINGS_OPEN, states.SETTINGS_CLOSED);
 
@@ -85,6 +90,8 @@ export function toggleSettingsMenu(settingsMenu, settingsButton) {
 
 // Cinematic Mode
 export function toggleCinematicMode() {
+  if (!config.useCinematicMode) return;
+
   stateMachine.toggleState('cinematicMode', states.CINEMATIC_MODE, states.EXIT_CINEMATIC_MODE);
   const isCinematicMode = stateMachine.getState('cinematicMode') === states.CINEMATIC_MODE;
   document.body.classList.toggle("osp-cinema", isCinematicMode);
@@ -109,20 +116,33 @@ export function toggleSubtitles(videoPlayerContainer, video, subtitleButton) {
   if (track) {
     const subtitleTrack = videoPlayerContainer.querySelector('.osp-track');
     const subtitlesEnabled = stateMachine.getState('subtitles') === states.SUBTITLES_ON;
-    subtitleTrack.style.display = subtitlesEnabled ? 'none' : 'block';
     stateMachine.toggleState('subtitles', states.SUBTITLES_ON, states.SUBTITLES_OFF);
 
-    // [Optional.] Just for UI feedback
-    /*
-    if(subtitleButton) {
-      subtitleButton.style.boxShadow = "0 0 10px 5px var(--videoPlayer-ui-border-color)";
-      subtitleButton.style.borderRadius = "25%";
+    if (!subtitlesEnabled && subtitleTrack) subtitleTrack.style.display = 'block';
+
+    if(subtitleButton && subtitleTrack) {
+      const subtitleTrackText = subtitleTrack.querySelector('.osp-track-subtitle');
+      if (subtitleTrackText) {
+        subtitleTrackText.textContent = subtitlesEnabled ? 'Subtitles Off' : 'Subtitles On';
+      } else {
+        const subtitleText = document.createElement("div");
+        subtitleText.className = "osp-track-subtitle";
+        subtitleText.textContent = subtitlesEnabled ? 'Subtitles Off' : 'Subtitles On';
+        subtitleTrack.appendChild(subtitleText);
+      }
+
       setTimeout(() => {
-        subtitleButton.style.boxShadow = "none";
-        subtitleButton.style.borderRadius = "0";
+        if (subtitleTrackText) {
+          if (subtitleTrackText.textContent === 'Subtitles Off') {
+            subtitleTrack.style.display = 'none';
+          }
+          if (subtitleTrackText.textContent === 'Subtitles On') {
+            subtitleTrackText.textContent = null;
+          }
+        }
       }, 600);
     }
-    */
+    
   } else {
     console.warn('No subtitles found');
   }

@@ -1,6 +1,6 @@
 # Enable compression
 <IfModule mod_deflate.c>
-  AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css text/javascript application/javascript application/json text/vtt
+  AddOutputFilterByType DEFLATE text/html text/plain text/xml text/vtt text/css text/javascript application/javascript application/json text/vtt
 </IfModule>
 
 # Enable CORS for video and audio files

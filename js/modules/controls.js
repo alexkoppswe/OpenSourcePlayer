@@ -9,39 +9,45 @@
   ==================================== */
 
 import { config } from './OpenSourcePlayer.js';
-import { addEventListeners } from './eventListeners.js';
 import { initializeContextMenu } from './contextMenu.js';
 import { updateButtonIcon } from './uiUpdates.js';
 
 // SVG icons paths
+const iconPath = 'assets/icons.svg';
 export const svgIcons = {
-  src: 'assets/icons.svg',
-  play: 'assets/icons.svg#icon-play',
-  pause: 'assets/icons.svg#icon-pause',
-  volumeUp: 'assets/icons.svg#icon-volume-up',
-  volumeDown: 'assets/icons.svg#icon-volume-down',
-  mute: 'assets/icons.svg#icon-mute',
-  fullscreen: 'assets/icons.svg#icon-fullscreen',
-  fullscreenExit: 'assets/icons.svg#icon-fullscreen-exit',
-  cinemaMode: 'assets/icons.svg#icon-lightlamp',
-  cinemaModeQ: 'assets/icons.svg#icon-lamp',
-  settings: 'assets/icons.svg#icon-settings',
-  subtitle: 'assets/icons.svg#icon-subtitle'
+  src: iconPath,
+  play: `${iconPath}#icon-play`,
+  pause: `${iconPath}#icon-pause`,
+  volumeUp: `${iconPath}#icon-volume-up`,
+  volumeDown: `${iconPath}#icon-volume-down`,
+  mute: `${iconPath}#icon-mute`,
+  fullscreen: `${iconPath}#icon-fullscreen`,
+  fullscreenExit: `${iconPath}#icon-fullscreen-exit`,
+  cinemaMode: `${iconPath}#icon-lightlamp`,
+  cinemaModeQ: `${iconPath}#icon-lamp`,
+  settings: `${iconPath}#icon-settings`,
+  subtitle: `${iconPath}#icon-subtitle`
 };
 
 // Setup video controls
-export async function setupVideoControls(video, playerContainer, hasSubtitles) {
+export async function setupVideoControls(video, playerContainer) {
   if (!video || !playerContainer) {
     console.error("Required video elements not found");
     return;
   }
 
   try {
-    const controls = await createPlayerUI(playerContainer);
+    let controls = playerContainer.querySelector('.osp-controls-outter') ? await getExistingControls(playerContainer) : await createPlayerUI(playerContainer);
 
-    if (!config.useSubtitles || !hasSubtitles && controls.subtitleButton) controls.subtitleButton.style.display = 'none';
     if (!config.useSettings && controls.settingsButton  || video.tagName === 'AUDIO') controls.settingsButton.style.display = 'none';
     if (config.useContextMenu && video.tagName === 'VIDEO') initializeContextMenu(video, playerContainer, controls.videoControls);
+    if (!config.useCinematicMode && controls.cinematicModeBtn) controls.cinematicModeBtn.style.display = 'none';
+    if(config.useSubtitles && controls.subtitleButton) {
+      const subtitle = video.getAttribute('data-subtitle-src');
+      if (subtitle) {
+        controls.subtitleButton.style.display = 'block';
+      }
+    }
 
     if (config.useSvgIcons) {
       insertSvgIcons(controls); // Insert SVG icons
@@ -49,7 +55,7 @@ export async function setupVideoControls(video, playerContainer, hasSubtitles) {
       setButtonTextContent(controls); // Set Text content
     }
 
-    addEventListeners(video, playerContainer, controls);  // Event listeners
+    return controls;
   } catch (error) {
     console.error("An error occurred while loading UI:", error);
   }
@@ -88,28 +94,30 @@ async function createPlayerUI(playerContainer) {
     videoControlsElement.innerHTML = videoControlsHtml;
     playerContainer.appendChild(videoControlsElement);
 
-    const controls = {
-      videoControls: playerContainer.querySelector('.osp-controls-outter'),
-      playPauseBtn: playerContainer.querySelector('.osp-play-pause'),
-      muteBtn: playerContainer.querySelector('.osp-mute'),
-      fullScreenBtn: playerContainer.querySelector('.osp-fullscreen'),
-      cinematicModeBtn: playerContainer.querySelector('.osp-cinema-button'),
-      subtitleButton: playerContainer.querySelector('.osp-subtitle'),
-      settingsButton: playerContainer.querySelector('.osp-settings-button'),
-      settingsMenu: playerContainer.querySelector('.osp-settings'),
-      volumeBar: playerContainer.querySelector('.osp-volume-bar'),
-      seekerBar: playerContainer.querySelector('.osp-seeker-bar'),
-      timestamp: playerContainer.querySelector('.osp-timestamp'),
-      timelength: playerContainer.querySelector('.osp-time-length'),
-      loadingDisplay: playerContainer.querySelector('.osp-loading-display'),
-      messageDisplay: playerContainer.querySelector('.osp-message-display')
-    };
-
-    return controls;
-
+    return getExistingControls(playerContainer);
   } catch (error) {
     console.error("An error occurred while creating player UI:", error);
   }
+}
+
+// Get existing controls from the DOM
+export async function getExistingControls(playerContainer) {
+  return {
+    videoControls: playerContainer.querySelector('.osp-controls-outter'),
+    playPauseBtn: playerContainer.querySelector('.osp-play-pause'),
+    muteBtn: playerContainer.querySelector('.osp-mute'),
+    fullScreenBtn: playerContainer.querySelector('.osp-fullscreen'),
+    cinematicModeBtn: playerContainer.querySelector('.osp-cinema-button'),
+    subtitleButton: playerContainer.querySelector('.osp-subtitle'),
+    settingsButton: playerContainer.querySelector('.osp-settings-button'),
+    settingsMenu: playerContainer.querySelector('.osp-settings'),
+    volumeBar: playerContainer.querySelector('.osp-volume-bar'),
+    seekerBar: playerContainer.querySelector('.osp-seeker-bar'),
+    timestamp: playerContainer.querySelector('.osp-timestamp'),
+    timelength: playerContainer.querySelector('.osp-time-length'),
+    loadingDisplay: playerContainer.querySelector('.osp-loading-display'),
+    messageDisplay: playerContainer.querySelector('.osp-message-display')
+  };
 }
 
 // Insert SVG icons

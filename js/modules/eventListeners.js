@@ -21,13 +21,13 @@ import { debounce } from './utils.js';
 import playerManager from './PlayerManager.js';
 import stateMachine, { states } from './stateMachine.js';
 import { handleMouseMove, showControls, mouseMoveTimer } from './mouseEvents.js';
-import { updateUI, updateSliderBackground, checkIfVertical, resizeCanvas, renderCanvas, isVertical } from './uiUpdates.js';
+import { updateUI, updateSliderBackground, checkIfVertical, resizeCanvas, renderCanvas, updateTimestamps } from './uiUpdates.js';
 import { togglePlayPause, toggleMute, toggleFullscreen, toggleSubtitles, toggleSettingsMenu, toggleCinematicMode, increaseVolume, decreaseVolume, skipBackward, skipForward, prefetchNextSegment } from './videoInput.js';
 
 let timer;
 
 // Main function
-export function addEventListeners(video, mediaContainer, controls) {
+export async function addEventListeners(video, mediaContainer, controls) {
   const { playPauseBtn, muteBtn, fullScreenBtn, volumeBar, seekerBar, cinematicModeBtn, subtitleButton, settingsButton, settingsMenu, videoControls, loadingDisplay, messageDisplay } = controls;
 
   // Video loaded event
@@ -38,7 +38,7 @@ export function addEventListeners(video, mediaContainer, controls) {
       clearTimeout(timer);
   
       if (config.useVerticalVidFill) {
-        checkIfVertical(video);
+        let isVertical = checkIfVertical(video);
         if (isVertical) {
           resizeCanvas(mediaContainer);
           renderCanvas(video, mediaContainer);
@@ -60,6 +60,7 @@ export function addEventListeners(video, mediaContainer, controls) {
     // Initial UI update
     updateSliderBackground(seekerBar);
     updateSliderBackground(volumeBar);
+    updateTimestamps(video, controls);
 
     // For multiple video players
     mediaContainer.addEventListener('focus', () => playerManager.setActivePlayer(video));
@@ -68,7 +69,7 @@ export function addEventListeners(video, mediaContainer, controls) {
 
     // State machine event listeners
     if (playerManager.getActivePlayer(video) === video) {
-      stateMachine.addListener(() => updateUI(video, controls));
+      stateMachine.addListener(() => requestAnimationFrame(() => updateUI(video, controls)));
     }
 
     // Vertical video fill
@@ -91,7 +92,6 @@ export function addEventListeners(video, mediaContainer, controls) {
     
     // Video event listeners
     video.addEventListener('fullscreenchange', () => updateUI(video, controls));
-    video.addEventListener('ended', () => playerManager.clearActivePlayer(video));
     video.addEventListener('emptied', () => video.pause());
     video.addEventListener('canplaystart', () => videoLoaded());
     video.addEventListener('canplay', () => videoLoaded());
@@ -99,6 +99,17 @@ export function addEventListeners(video, mediaContainer, controls) {
     video.addEventListener('loadedmetadata', () => videoLoaded());
     video.addEventListener('progress', () => updateSliderBackground(seekerBar));
     video.addEventListener('encrypted', () => console.warn('Media is encrypted.'));
+
+    video.addEventListener('ended', () => {
+      playerManager.setActivePlayer(video);
+      stateMachine.setState('playback', states.ENDED);
+      if (stateMachine.getState('loop') === states.LOOPING) {
+        video.currentTime = 0.2;
+        video.play();
+      } else {
+        video.pause();
+      }
+    });
 
     video.addEventListener('click', () => {
       if (playerManager.getActivePlayer() !== video) {
@@ -125,13 +136,11 @@ export function addEventListeners(video, mediaContainer, controls) {
         }
       }
       */
-
-      updateUI(video, controls);
+      debounce(requestAnimationFrame(() => updateUI(video, controls)), 20);
       prefetchNextSegment(video);
     });
 
     // Loading video
-    video.addEventListener('abort', () => showMessage('Video playback was aborted.'));
     video.addEventListener("loadstart", () => loadingDisplay.style.display = 'block');
     video.addEventListener('stalled', () => loadingDisplay.style.display = 'block');
 
@@ -198,11 +207,11 @@ export function addEventListeners(video, mediaContainer, controls) {
         } else if (target === subtitleButton || target.closest('.osp-subtitle')) {
           toggleSubtitles(mediaContainer, video, subtitleButton);
         } else if (target === settingsButton || target.closest('.osp-settings-button')) {
-          toggleSettingsMenu(settingsMenu, settingsButton);
+          toggleSettingsMenu(video, settingsMenu, settingsButton);
         }
   
         if (playerManager.getActivePlayer(video) === video) {
-          updateUI(video, controls);
+          requestAnimationFrame(() => updateUI(video, controls));
         }
       } catch (error) {
         console.error('An error occurred:', error);
@@ -214,6 +223,7 @@ export function addEventListeners(video, mediaContainer, controls) {
       video.volume = volumeBar.value;
       video.muted = video.volume === 0;
       updateSliderBackground(volumeBar);
+      updateUI(video, controls);
     });
 
     volumeBar.addEventListener('volumechange', () => {
@@ -230,8 +240,11 @@ export function addEventListeners(video, mediaContainer, controls) {
     });
   
     seekerBar.addEventListener('input', async () => {
+      if (config.mouseEvent) handleMouseMove(video, videoControls);
+
       const newTime = (seekerBar.value / 100) * video.duration;
       video.currentTime = newTime;
+      prefetchNextSegment(video);
       updateSliderBackground(seekerBar);
       updateUI(video, controls);
     });
@@ -286,14 +299,14 @@ export function addEventListeners(video, mediaContainer, controls) {
           break;
         case 't':
         case 'T':
-          toggleSettingsMenu(settingsMenu, settingsButton);
+          toggleSettingsMenu(video, settingsMenu, settingsButton);
           break;
         default:
           break;
       }
 
       if (playerManager.getActivePlayer(video) === video) {
-        updateUI(video, controls);
+        requestAnimationFrame(() => updateUI(video, controls));
       }
     });
   } catch (error) {

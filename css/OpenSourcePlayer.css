@@ -26,6 +26,7 @@
   --videoPlayer-width: 600px;
   --videoPlayer-height: 100vh;
   --videoPlayer-font: Arial, sans-serif;
+  --videoPlayer-slider-height: 0.1rem 0;
 }
 
 video::-webkit-media-text-track-container,
@@ -43,22 +44,23 @@ video::cue {
 /* Media player */
 .osp-player {
   position: relative;
-  width: 100%;
   min-width: 330px;
   min-height: calc(42px + 0.8rem);
   background-color: var(--videoPlayer-ui-dark-color);
+  overflow: hidden;
 }
 
 .osp-player video {
   position: relative;
-  width: inherit;
-  height: inherit;
+  width: 100%;
+  height: 100%;
   display: block;
   margin: 0 auto;
   max-height: inherit;
   max-width: inherit;
   min-width: inherit;
   min-height: inherit;
+  background-color: #000;
   overflow: hidden;
 }
 
@@ -178,7 +180,7 @@ video::cue {
   width: 100%;
   min-width: 0.8rem;
   height: 46px;
-  padding: 0 0.8rem;
+  padding: 0;
   color: var(--videoPlayer-ui-light-color);
   background-color: rgba(0, 0, 0, 0.5);
   font-family: var(--videoPlayer-font);
@@ -196,6 +198,7 @@ video::cue {
   display: flex;
   align-items: center;
   width: inherit;
+  margin: 0 0.4rem;
 }
 
 .osp-controls-inner > * {
@@ -250,7 +253,7 @@ video::cue {
   -webkit-appearance: none;
   appearance: none;
   margin: 0;
-  padding: 0.2rem 0;
+  padding: var(--videoPlayer-slider-height);
   height: 0.5rem;
   background: linear-gradient(to right, var(--slider-active-color) var(--current-percentage), var(--videoPlayer-ui-bg-color) var(--current-percentage));
   outline: none;
@@ -299,10 +302,10 @@ video::cue {
   width: 100%;
   height: 0.5rem;
   background: linear-gradient(
-    to right, transparent 0%, transparent calc(var(--current-percentage) + 1px),
-    var(--videoPlayer-ui-light-color) calc(var(--current-percentage) + 1px),
+    to right, transparent 0%, transparent var(--current-percentage),
+    var(--videoPlayer-ui-light-color) var(--current-percentage),
     var(--videoPlayer-ui-light-color) var(--buffered-percentage),
-    transparent var(--buffered-percentage), transparent
+    transparent var(--buffered-percentage), transparent 100%
   );
 }
 
@@ -362,7 +365,6 @@ video::cue {
 
 .contextAboutWindow {
   display: none;
-  width: inherit;
   max-width: 100%;
   height: auto;
   background-color: inherit;
@@ -380,18 +382,21 @@ video::cue {
 
 /* Cinematic mode */
 .osp-cinema {
-  position: fixed;
-  top: 0;
-  left: 0;
   width: 100%;
   height: 100%;
   background-color: black;
   transition: background-color 0.3s ease-out;
 }
 
-.osp-cinema body {
+.osp-cinema body *:not(.osp-player) {
   transition: background-color 0.3s ease-out;
 }
+
+/* Extra elements to be hidden in cinematic mode
+.osp-cinema element,
+.osp-cinema .element {
+  opacity: 0;
+}*/
 
 .osp-cinema .osp-player  {
   z-index: 10000;
@@ -456,5 +461,11 @@ video::cue {
 }
 
 .osp-settings.open .osp-subtitle {
+  display: none;
   font-size: 0.9em;
+}
+@media screen and (max-width: 768px) {
+  .osp-settings.open .osp-subtitle {
+    font-size: 1em;
+  }
 }

@@ -10,7 +10,7 @@
 
 import { config } from './OpenSourcePlayer.js';
 import { handleMouseMove } from './mouseEvents.js';
-import { toggleFullscreen, toggleLoop, togglePip } from './videoInput.js';
+import { togglePlayPause, toggleFullscreen, toggleLoop, togglePip } from './videoInput.js';
 
 let mouseMoveTimer;
 
@@ -22,7 +22,8 @@ export function initializeContextMenu(video, videoPlayerContainer, videoControls
 
   const contextMenuHtml = `
     <div class="osp-context" role="menu" aria-label="Context Menu">
-      <span class="contextFulscrn" role="menuitem" aria-label="Fullscreen">&#9974; Fullscreen</span>
+      <span class="contextPlayPause" role="menuitem" aria-label="Play/Pause">&#9658; Play/Pause</span>
+      <span class="contextFullscreen" role="menuitem" aria-label="Fullscreen">&#9974; Fullscreen</span>
       <span class="contextLoop" role="menuitem" aria-label="Loop">&#8634; Loop</span>
       <span class="contextPip" role="menuitem" aria-label="Picture-in-Picture" title="Picture-in-Picture">&#9714; Pip</span>
       <span class="contextAbout" role="menuitem" aria-label="About">&#10082; About</span>
@@ -56,7 +57,10 @@ export function initializeContextMenu(video, videoPlayerContainer, videoControls
 // Handle click events
 function handleContextMenuClick(event, video, videoPlayerContainer, contextMenu, aboutWindow, loopButton) {
   const target = event.target;
-  if (target.classList.contains('contextFulscrn')) {
+  if (target.classList.contains('contextPlayPause')) {
+    togglePlayPause(video);
+    hideContextMenu(contextMenu);
+  } else if (target.classList.contains('contextFullscreen')) {
     toggleFullscreen(videoPlayerContainer);
     hideContextMenu(contextMenu);
   } else if (target.classList.contains('contextLoop')) {

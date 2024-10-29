@@ -16,7 +16,6 @@ import { svgIcons } from './controls.js';
 import stateMachine, { states } from './stateMachine.js';
 import playerManager from './PlayerManager.js';
 
-export let isVertical = false;
 let updateUITimer;
 
 // Main UI update function
@@ -27,9 +26,7 @@ export async function updateUI(video, controls) {
     cancelAnimationFrame(updateUITimer);
   }
 
-  const { seekerBar, volumeBar, timestamp, timelength, muteBtn } = controls;
-  const currentTime = video.currentTime;
-  const duration = video.duration;
+  const { seekerBar, volumeBar, muteBtn } = controls;
 
   if (muteBtn) {
     if (video.volume > 0) {
@@ -48,24 +45,33 @@ export async function updateUI(video, controls) {
   }
 
   updateUITimer = requestAnimationFrame(() => {
-    updateSeekerBar(video, seekerBar, currentTime, duration, controls);
+    updateSeekerBar(video, seekerBar, controls);
     updateVolumeBar(video, volumeBar);
-    updateTimestamps(video, timestamp, timelength, currentTime, duration);
+    updateTimestamps(video, controls);
   });
 }
 
 // Bars & timestamps
-async function updateSeekerBar(video, seekerBar, currentTime, duration, controls) {
+async function updateSeekerBar(video, seekerBar, controls) {
   if (!video) return;
   
   if (stateMachine.getState('seeking') === states.SEEKING) return;
 
   if (seekerBar) {
-    const currentPercentage = (currentTime / Number(duration.toFixed(0))) * 100;
-    const bufferedEnd = (video.buffered.end(video.buffered.length - 1) / duration) * 100;
+    const currentTime = parseFloat(video.currentTime);
+    const duration = parseFloat(video.duration);
+    const currentPercentage = ((currentTime / duration) * 100).toFixed(1);
+    const bufferedEnd = video.buffered.length > 0 ? ((video.buffered.end(video.buffered.length - 1) / duration) * 100).toFixed(1) : 0;
+    
+    if (currentTime === 0) {
+      seekerBar.style.borderRadius = '5px 0 0 5px';
+    } else if (currentTime === duration) {
+      seekerBar.style.borderRadius = '0 5px 5px 0';
+    } else {
+      seekerBar.style.borderRadius = 'initial';
+    }
 
     seekerBar.value = isNaN(currentPercentage) ? 0 : currentPercentage;
-    seekerBar.style.setProperty('--current-percentage', `${currentPercentage}%`);
     seekerBar.style.setProperty('--buffered-percentage', `${bufferedEnd}%`);
     updateSliderBackground(seekerBar);
   }
@@ -89,8 +95,10 @@ async function updateVolumeBar(video, volumeBar) {
 }
 
 // Timestamps
-async function updateTimestamps(video, timestamp, timelength, currentTime, duration) {
-  if (playerManager.getActivePlayer(video) !== video) return;
+export async function updateTimestamps(video, controls) {
+  const { timestamp, timelength } = controls;
+  const currentTime = video.currentTime;
+  const duration = video.duration;
 
   if (timestamp && timelength) {
     timestamp.textContent = isNaN(currentTime) ? '' : formatTime(Number(currentTime));
@@ -102,10 +110,10 @@ async function updateTimestamps(video, timestamp, timelength, currentTime, durat
 export async function updateSliderBackground(slider) {
   if (!slider) return;
 
-  const value = slider.value;
-  const min = slider.min || 0;
-  const max = slider.max || 100;
-  const percentage = ((value - min) / (max - min)) * 100;
+  const value = parseFloat(slider.value);
+  const min = parseFloat(slider.min) || 0.0;
+  const max = parseFloat(slider.max) || 100.0;
+  const percentage = (((value - min) / (max - min)) * 100).toFixed(1);
 
   slider.style.setProperty('--current-percentage', `${percentage}%`);
 }
@@ -174,11 +182,13 @@ function updateTextContent(video, controls) {
 
 // Check if the video is vertical
 export function checkIfVertical(video) {
+  let isVertical = false;
   if (!config.useVerticalVidFill) return;
   if (!video || playerManager.getActivePlayer(video) !== video) return;
 
   const videoAspect = video.videoHeight / video.videoWidth;
   isVertical = videoAspect > 1;
+  return isVertical;
 }
 
 // Resize the canvas
@@ -207,11 +217,14 @@ export function resizeCanvas(container) {
 // Render the video on the canvas
 export function renderCanvas(video, container) {
   if (!config.useVerticalVidFill) return;
-  if (!video || !isVertical || playerManager.getActivePlayer(video) !== video) return;
+  if (!video || playerManager.getActivePlayer(video) !== video) return;
+  if (!checkIfVertical(video)) return;
 
   const canvas = container.querySelector('.osp-player-background');
   const ctx = container.canvasContext;
   if (!canvas || !ctx) return;
+
+  video.style.background = 'transparent';
 
   if (!video.paused && !video.ended && playerManager.getActivePlayer(video) === video) {
     requestAnimationFrame(() => {

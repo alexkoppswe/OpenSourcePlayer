@@ -1,4 +1,4 @@
-import { initializePlayer } from './modules/OpenSourcePlayer.js';
+import { initializePlayer } from './js/modules/OpenSourcePlayer.js';
 
 document.addEventListener('DOMContentLoaded', () => {
   initializePlayer();
