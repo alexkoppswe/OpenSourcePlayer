@@ -26,25 +26,34 @@ export const svgIcons = {
   cinemaMode: `${iconPath}#icon-lightlamp`,
   cinemaModeQ: `${iconPath}#icon-lamp`,
   settings: `${iconPath}#icon-settings`,
-  subtitle: `${iconPath}#icon-subtitle`
+  subtitle: `${iconPath}#icon-subtitle`,
+  fastForward: `${iconPath}#icon-forward`
 };
 
 // Setup video controls
 export async function setupVideoControls(video, playerContainer) {
   if (!video || !playerContainer) {
-    console.error("Required video elements not found");
-    return;
+    throw new Error("Video or player container not found");
   }
 
   try {
-    let controls = playerContainer.querySelector('.osp-controls-outter') ? await getExistingControls(playerContainer) : await createPlayerUI(playerContainer);
+    // Get/Set existing controls
+    let controls = playerContainer.querySelector('.osp-controls-outter')
+    ? await getExistingControls(playerContainer)
+    : await createPlayerUI(playerContainer);
 
-    if (!config.useSettings && controls.settingsButton  || video.tagName === 'AUDIO') controls.settingsButton.style.display = 'none';
+    if (!controls || !controls.videoControls) {
+      throw new Error("Video controls not found");
+    }
+
+    if (!config.useSettings && controls.settingsButton || video.tagName === 'AUDIO') controls.settingsButton.style.display = 'none';
     if (config.useContextMenu && video.tagName === 'VIDEO') initializeContextMenu(video, playerContainer, controls.videoControls);
     if (!config.useCinematicMode && controls.cinematicModeBtn) controls.cinematicModeBtn.style.display = 'none';
+    if (!config.useFastForward && controls.fastForwardBtn) controls.fastForwardBtn.style.display = 'none';
+
     if(config.useSubtitles && controls.subtitleButton) {
       const subtitle = video.getAttribute('data-subtitle-src');
-      if (subtitle) {
+      if (subtitle && subtitle.trim() !== '') {
         controls.subtitleButton.style.display = 'block';
       }
     }
@@ -58,6 +67,7 @@ export async function setupVideoControls(video, playerContainer) {
     return controls;
   } catch (error) {
     console.error("An error occurred while loading UI:", error);
+    return {};
   }
 }
 
@@ -73,6 +83,7 @@ async function createPlayerUI(playerContainer) {
         </div>
         <div class="osp-controls-inner">
           <span class="osp-button osp-play-pause" role="button" tabindex="0" aria-label="Play"></span>
+          <span class="osp-button osp-fast-forward" role="button" tabindex="0" title="Fast Forward" aria-label="Fast Forward"></span>
           <span class="osp-timestamp" aria-live="off"><time datetime="PT0S">00:00</time></span>
           <span class="osp-button osp-mute" role="button" tabindex="0" title="Mute (M)" aria-label="Mute"></span>
           <input class="osp-volume-bar" type="range" min="0" max="1" step="0.1" value="1" aria-label="Volume" aria-valuemin="0" aria-valuemax="1" aria-valuenow="1">
@@ -91,6 +102,7 @@ async function createPlayerUI(playerContainer) {
     `;
 
     const videoControlsElement = document.createElement('div');
+    videoControlsElement.classList.add('osp-video-controls');  // Css class is unused.
     videoControlsElement.innerHTML = videoControlsHtml;
     playerContainer.appendChild(videoControlsElement);
 
@@ -116,7 +128,8 @@ export async function getExistingControls(playerContainer) {
     timestamp: playerContainer.querySelector('.osp-timestamp'),
     timelength: playerContainer.querySelector('.osp-time-length'),
     loadingDisplay: playerContainer.querySelector('.osp-loading-display'),
-    messageDisplay: playerContainer.querySelector('.osp-message-display')
+    messageDisplay: playerContainer.querySelector('.osp-message-display'),
+    fastForwardBtn: playerContainer.querySelector('.osp-fast-forward')
   };
 }
 
@@ -124,27 +137,15 @@ export async function getExistingControls(playerContainer) {
 export async function insertSvgIcons(controls) {
   if (!config.useSvgIcons) return;
 
-  const { playPauseBtn, muteBtn, fullScreenBtn, cinematicModeBtn, settingsButton, subtitleButton } = controls;
-
-  // [Optional.] Fetch SVG icons to check MIME type
-  /*try {
-    const response = await fetch(svgIcons.src);
-    const contentType = response.headers.get('Content-Type');
-    if (!contentType || !contentType.includes('image/svg+xml')) {
-      console.error(`Invalid MIME type for ${svgIcons.src}: ${contentType}`);
-    }
-  } catch (error) {
-    console.error(`Failed to fetch ${svgIcons.src}:`, error);
-  }*/
-
-    const buttons = {
-      play: playPauseBtn,
-      volumeUp: muteBtn,
-      fullscreen: fullScreenBtn,
-      cinemaMode: cinematicModeBtn,
-      settings: settingsButton,
-      subtitle: subtitleButton
-    };
+  const buttons = {
+    play: controls.playPauseBtn,
+    volumeUp: controls.muteBtn,
+    fullscreen: controls.fullScreenBtn,
+    cinemaMode: controls.cinematicModeBtn,
+    settings: controls.settingsButton,
+    subtitle: controls.subtitleButton,
+    fastForward: controls.fastForwardBtn
+  };
 
   try {
     for (const [key, iconId] of Object.entries(svgIcons)) {
@@ -159,7 +160,7 @@ export async function insertSvgIcons(controls) {
 
 // Set Text content
 async function setButtonTextContent(controls) {
-  const { playPauseBtn, muteBtn, fullScreenBtn, cinematicModeBtn, subtitleButton, settingsButton } = controls;
+  const { playPauseBtn, muteBtn, fullScreenBtn, cinematicModeBtn, subtitleButton, settingsButton, fastForwardBtn } = controls;
 
   if (playPauseBtn) {
     playPauseBtn.innerHTML = '&#9658;';
@@ -184,5 +185,9 @@ async function setButtonTextContent(controls) {
   if (settingsButton) {
     settingsButton.innerHTML = '&#9881;';
     settingsButton.setAttribute('aria-label', 'Settings');
+  }
+  if (fastForwardBtn) {
+    fastForwardBtn.innerHTML = '&#8635;';
+    fastForwardBtn.setAttribute('aria-label', 'Fast Forward');
   }
 }

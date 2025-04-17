@@ -1,19 +1,25 @@
 //  subtitles.js
 
 /*=======// Subtitles Module //========
-  1. Loads & display subtitles function
-  2. Fetches subtitle file function
+  1. State Machine Helper
+  2. Loads & display subtitles function
+  3. Fetches subtitle file function
   ===================================== */
 
 import { config } from './OpenSourcePlayer.js';
-import stateMachine, { states } from './stateMachine.js';
+import { states } from './stateMachine.js';
+
+function getPlayerStateMachine(videoElement) {
+  const playerContainer = videoElement.closest('.osp-player');
+  return playerContainer?.stateMachine;
+}
 
 // Load & display subtitles
 export async function loadSubtitle(video, subtitlePath) {
-  if (!video) return;
-  if (!config.useSubtitles) return;
+  if (!video || !config.useSubtitles) return false;
 
   try {
+    const stateMachine = getPlayerStateMachine(video);
     const subtitleText = await fetchSubtitle(subtitlePath);
     
     if (!subtitleText) {
@@ -27,11 +33,12 @@ export async function loadSubtitle(video, subtitlePath) {
 
     const subtitleSource = document.createElement("track");
     subtitleSource.kind = "metadata";
-    subtitleSource.srclang = "en";
-    subtitleSource.label = "English";
     subtitleSource.src = subtitlePath;
     subtitleSource.default = true;
     subtitleSource.mode = "hidden";
+    // Set the default language to "en"
+    subtitleSource.srclang = "en";
+    subtitleSource.label = "English";
 
     video.appendChild(subtitleSource);
 
@@ -52,6 +59,7 @@ export async function loadSubtitle(video, subtitlePath) {
     });
   } catch (error) {
     console.error("An error occurred while loading subtitles:", error);
+    return false;
   }
 }
 
@@ -63,7 +71,7 @@ async function fetchSubtitle(subtitleUrl) {
     if (cachedResponse) {
       return cachedResponse.text();
     } else {
-      const response = await fetch(subtitleUrl, { mode: 'cors' });
+      const response = await fetch(subtitleUrl, { mode: 'cors', cache: 'force-cache' });
       if (!response.ok) {
         throw new Error(`Failed to fetch ${subtitleUrl}: ${response.status} ${response.statusText}`);
       }

@@ -10,59 +10,70 @@
   7. toggle subtitles function
   8. toggle pip function
   9. Prefetches the next video segment function
-  10. Handle skip & volume from keyboard functions 
+  10. Handle skip & volume from keyboard functions
+     -increaseVolume
+     -decreaseVolume
+     -skipBackward
+     -skipForward
 ======================================== */
 
 import { config } from './OpenSourcePlayer.js';
-import stateMachine, { states } from './stateMachine.js';
-import playerManager from './PlayerManager.js';
+import { states } from './stateMachine.js';
 import { mouseMoveTimer } from './mouseEvents.js';
+
+function getPlayerStateMachine(videoElement) {
+  const playerContainer = videoElement.closest('.osp-player');
+  return playerContainer?.stateMachine;
+}
 
 // Play/Pause
 export function togglePlayPause(video) {
-  if (!video) return;
-  if (playerManager.getActivePlayer(video) !== video) return;
+  if (!video || video.error) return;
+  const stateMachine = getPlayerStateMachine(video);
 
-  if (video.paused) {
-    video.play();
-    stateMachine.setState('playback', states.PLAYING);
+  if (video.paused && stateMachine?.getState('playback') !== states.ERROR) {
+    video.play().catch(e => {
+      stateMachine?.setState('playback', states.ERROR);
+      if (config.debugger) console.error(`Player ${video.closest('.osp-player')?.getAttribute('opid')}: Playback error:`, e);
+    });
   } else {
     video.pause();
-    stateMachine.setState('playback', states.PAUSED);
   }
 }
 
 // Mute
 export function toggleMute(video) {
   if (!video) return;
-  if (playerManager.getActivePlayer(video) !== video) return;
-
+  
   const storedVolume = sessionStorage.getItem('videoVolume');
+  const stateMachine = getPlayerStateMachine(video);
   video.muted = !video.muted;
 
   if (video.muted) {
     video.volume = 0;
+    stateMachine?.setState('volume', states.MUTED);
   } else {
-    if (storedVolume) {
+    if (storedVolume && storedVolume > 0.0) {
       video.volume = parseFloat(storedVolume);
     } else {
       video.volume = 0.1;
     }
+    stateMachine?.setState('volume', states.UNMUTED);
   }
-  stateMachine.setState('mute', video.muted ? states.MUTED : states.UNMUTED);
 }
 
 // Fullscreen
-export function toggleFullscreen(videoPlayerContainer) {
+export function toggleFullscreen(videoPlayerContainer, video) {
   try {
+    const stateMachine = getPlayerStateMachine(video);
     if (!document.fullscreenElement) {
       videoPlayerContainer.controls = false;
       videoPlayerContainer.requestFullscreen();
-      stateMachine.setState('fullscreen', states.FULLSCREEN);
+      stateMachine?.setState('display', states.FULLSCREEN);
       clearTimeout(mouseMoveTimer);
     } else {
       document.exitFullscreen();
-      stateMachine.setState('fullscreen', states.EXIT_FULLSCREEN);
+      stateMachine?.setState('display', states.WINDOWED);
       videoPlayerContainer.scrollIntoView();
     }
   } catch (error) {
@@ -73,8 +84,9 @@ export function toggleFullscreen(videoPlayerContainer) {
 
 // Settings Menu
 export function toggleSettingsMenu(video, settingsMenu, settingsButton) {
-  if (!config.useSettings) return;
+  if (!config.useSettings || !video || video.tagName === 'AUDIO') return;
 
+  const stateMachine = getPlayerStateMachine(video);
   const track = video.querySelector('track');
   if (!track && !config.useCinematicMode) return;
 
@@ -89,18 +101,20 @@ export function toggleSettingsMenu(video, settingsMenu, settingsButton) {
 }
 
 // Cinematic Mode
-export function toggleCinematicMode() {
+export function toggleCinematicMode(video) {
   if (!config.useCinematicMode) return;
 
-  stateMachine.toggleState('cinematicMode', states.CINEMATIC_MODE, states.EXIT_CINEMATIC_MODE);
-  const isCinematicMode = stateMachine.getState('cinematicMode') === states.CINEMATIC_MODE;
+  const stateMachine = getPlayerStateMachine(video);
+  stateMachine.toggleState('visualMode', states.CINEMATIC_MODE, states.NORMAL_MODE);
+  const isCinematicMode = stateMachine.getState('visualMode') === states.CINEMATIC_MODE;
   document.body.classList.toggle("osp-cinema", isCinematicMode);
 }
 
+// Loop
 export function toggleLoop(video) {
   if (!video) return;
-  if (playerManager.getActivePlayer(video) !== video) return;
-
+  
+  const stateMachine = getPlayerStateMachine(video);
   video.loop = !video.loop;
   stateMachine.setState('loop', video.loop ? states.LOOPING : states.NOT_LOOPING);
 }
@@ -109,8 +123,8 @@ export function toggleLoop(video) {
 export function toggleSubtitles(videoPlayerContainer, video, subtitleButton) {
   if (!video) return;
   if (!config.useSubtitles) return;
-  if (playerManager.getActivePlayer(video) !== video) return;
-
+  
+  const stateMachine = getPlayerStateMachine(video);
   const track = video.querySelector('track');
 
   if (track) {
@@ -151,9 +165,9 @@ export function toggleSubtitles(videoPlayerContainer, video, subtitleButton) {
 // PIP
 export function togglePip(video) {
   if (!video) return;
-  if (playerManager.getActivePlayer(video) !== video) return;
-
+  
   try {
+    const stateMachine = getPlayerStateMachine(video);
     if (document.pictureInPictureEnabled) {
       if (document.pictureInPictureElement) {
         document.exitPictureInPicture();
@@ -173,7 +187,6 @@ export function togglePip(video) {
 // Prefetch
 export async function prefetchNextSegment(video) {
   if (!video) return;
-  if (playerManager.getActivePlayer(video) !== video) return;
 
   const nextSegmentUrl = video.getAttribute('src');
   if (!nextSegmentUrl || (video.buffered.length > 0 && video.buffered.end(0) > video.currentTime)) {
@@ -193,26 +206,25 @@ export async function prefetchNextSegment(video) {
 // Keyboard shortcuts for skip & volume
 export function increaseVolume(video) {
   if (!video) return;
-  if (playerManager.getActivePlayer(video) !== video) return;
+  
   if(video.muted) video.muted = false;
-
   video.volume = Math.min(parseFloat((video.volume + 0.1).toFixed(1)), 1);
 }
 
 export function decreaseVolume(video) {
   if (!video) return;
-  if (playerManager.getActivePlayer(video) !== video) return;
-  video.volume = Math.max(parseFloat((video.volume - 0.1).toFixed(1)), 0);
+
+  if (!video.muted) {
+    video.volume = Math.max(parseFloat((video.volume - 0.1).toFixed(1)), 0);
+  }
 }
 
 export function skipBackward(video) {
   if (!video) return;
-  if (playerManager.getActivePlayer(video) !== video) return;
   video.currentTime = Math.max(Math.floor(video.currentTime - 10), video.minSegmentDuration || 0);
 }
 
 export function skipForward(video) {
   if (!video) return;
-  if (playerManager.getActivePlayer(video) !== video) return;
   video.currentTime = Math.min(Math.ceil(video.currentTime + 10), video.duration);
 }

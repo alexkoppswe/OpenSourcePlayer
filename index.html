@@ -4,18 +4,20 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Video Player</title>
-  <link rel="preload" href="css/OpenSourcePlayer.css" as="style">
+  <link rel="preload" href="css/OpenSourcePlayer.css" as="style" type="text/css">
+  <link rel="prefetch" href="assets/icons.svg" as="image" type="image/svg+xml">
   <link rel="stylesheet" href="css/styles.css">
   <link rel="stylesheet" href="css/OpenSourcePlayer.css" defer>
   <link rel="shortcut icon" href="assets/favicon.ico" type="image/x-icon">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self'; img-src 'self'; script-src 'self'; media-src 'self' https://commondatastorage.googleapis.com">
 </head>
 <body>
   
   <main>
+    <h1>Open Source Media Player</h1>
     <div class="osp-player">
-      <!-- Subtitles and segments for MediaSource tags. -->
-      <!--<video data-subtitle-src="../subtitles.vtt" data-segments="">-->
-      <video nodownload loading="lazy">
+      <!-- Subtitles data tag: <video data-subtitle-src="./subtitles.vtt">-->
+      <video>
         <source src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4" type="video/mp4" crossorigin="anonymous">
         Sorry, Your browser does not support html video. Try updating it.
       </video>
@@ -24,7 +26,7 @@
 
   <footer>CopyLeft</footer>
 
-  <script type="module" src="js/modules/preload.js" crossorigin="use-credentials" async></script>
-  <script type="module" src="script.js" crossorigin="use-credentials"></script>
+  <script type="module" src="js/modules/preload.js" async></script>
+  <script type="module" src="script.js" defer></script>
 </body>
 </html>

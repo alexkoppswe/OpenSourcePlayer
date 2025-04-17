@@ -19,7 +19,6 @@ export function initializeContextMenu(video, videoPlayerContainer, videoControls
   if (!config.useContextMenu) return;
 
   const aboutUrl = 'github.com/alexkoppswe/OpenSourcePlayer';
-
   const contextMenuHtml = `
     <div class="osp-context" role="menu" aria-label="Context Menu">
       <span class="contextPlayPause" role="menuitem" aria-label="Play/Pause">&#9658; Play/Pause</span>
@@ -27,7 +26,7 @@ export function initializeContextMenu(video, videoPlayerContainer, videoControls
       <span class="contextLoop" role="menuitem" aria-label="Loop">&#8634; Loop</span>
       <span class="contextPip" role="menuitem" aria-label="Picture-in-Picture" title="Picture-in-Picture">&#9714; Pip</span>
       <span class="contextAbout" role="menuitem" aria-label="About">&#10082; About</span>
-      <span class="contextAboutWindow"><a href="https://${aboutUrl}" target="_blank" title="@${aboutUrl}">Open Source Player v1.0</a></span>
+      <span class="contextAboutWindow"><a href="https://${aboutUrl}" target="_blank" title="@${aboutUrl}">Open Source Player v1.5</a></span>
     </div>
   `;
   videoPlayerContainer.insertAdjacentHTML('beforeend', contextMenuHtml);
@@ -39,6 +38,7 @@ export function initializeContextMenu(video, videoPlayerContainer, videoControls
   // Event listeners
   document.addEventListener('click', (event) => hideCustomMenuOutside(event, contextMenu));
   window.addEventListener('resize', () => hideContextMenu(contextMenu));
+  window.addEventListener('scroll', () => hideContextMenu(contextMenu));
 
   videoPlayerContainer.addEventListener('contextmenu', (event) => {
     event.preventDefault();
@@ -48,11 +48,8 @@ export function initializeContextMenu(video, videoPlayerContainer, videoControls
 
   contextMenu.addEventListener('mousemove', () => handleMouseMove(video, videoControls));
   contextMenu.addEventListener('mouseenter', () => clearTimeout(mouseMoveTimer));
-
   contextMenu.addEventListener('click', (event) => handleContextMenuClick(event, video, videoPlayerContainer, contextMenu, aboutWindow, loopButton));
 }
-
-/*=== Functions ===*/
 
 // Handle click events
 function handleContextMenuClick(event, video, videoPlayerContainer, contextMenu, aboutWindow, loopButton) {
@@ -61,7 +58,7 @@ function handleContextMenuClick(event, video, videoPlayerContainer, contextMenu,
     togglePlayPause(video);
     hideContextMenu(contextMenu);
   } else if (target.classList.contains('contextFullscreen')) {
-    toggleFullscreen(videoPlayerContainer);
+    toggleFullscreen(videoPlayerContainer, video);
     hideContextMenu(contextMenu);
   } else if (target.classList.contains('contextLoop')) {
     toggleLoop(video);

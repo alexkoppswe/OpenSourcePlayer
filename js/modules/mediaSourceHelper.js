@@ -1,25 +1,46 @@
 // mediaSourceHelper.js
-import { config } from './OpenSourcePlayer.js';
 
-export function setupMediaSource(video, segments) {
-  if (!config.useMediaSource) return;
-  
-  if (!video || !segments || !Array.isArray(segments) || segments.length === 0) {
-    console.error("Missing or invalid parameters for MediaSource");
-    return;
+/*======// MediaSource //======
+  1. MediaSource Setup
+    -Event Listener
+
+  * NOTE: Not fully implemented, you need to add your own code to handle the MediaSource.
+============================= */
+
+export function setupMediaSource(video, videoSrc, type) {
+  if (!('MediaSource' in window)) {
+    console.warn('MediaSource not supported');
+    return false;
   }
 
-  if (!("MediaSource" in window) || !window.MediaSource) {
-    console.warn('MediaSource is not supported.');
-    return;
+  if (!type || typeof type !== 'string') {
+    console.warn(`Media Type Check: Invalid type string provided: ${type}`);
+    return false;
+  }
+
+  if (videoSrc && typeof videoSrc.canPlayType === 'function') {
+    const supportLevel = videoSrc.canPlayType(type);
+    if (supportLevel === '') {
+      console.warn(`Media Type Check: Unsupported media type: ${type}`);
+      return false;
+    }
   }
 
   const mediaSource = new MediaSource();
+  if (!mediaSource) return;
+
   video.src = URL.createObjectURL(mediaSource);
 
-  // Add your own code here to handle the 'sourceopen' event
-  mediaSource.addEventListener('sourceopen', () => {
-    const sourceBuffer = mediaSource.addSourceBuffer('video/mp4; codecs="avc1.64001f"');
-    sourceBuffer.mode = 'sequence';
+  mediaSource.addEventListener('sourceopen', async () => {
+    try {
+      const sourceBuffer = mediaSource.addSourceBuffer(type);
+      console.log('Source buffer added.');
+  
+      sourceBuffer.addEventListener('updateend', () => {
+        console.log('Source buffer update complete.');
+      });
+    } catch (error) {
+      console.error('Error adding source buffer:', error);
+    }
   });
 }

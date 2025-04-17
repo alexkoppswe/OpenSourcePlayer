@@ -1,6 +1,6 @@
 # Enable compression
 <IfModule mod_deflate.c>
-  AddOutputFilterByType DEFLATE text/html text/plain text/xml text/vtt text/css text/javascript application/javascript application/json text/vtt
+  AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css text/javascript application/javascript application/json text/vtt
 </IfModule>
 
 # Enable CORS for video and audio files
@@ -12,6 +12,7 @@
 <IfModule mod_headers.c>
   Header set X-Content-Type-Options "nosniff"
   Header set X-Frame-Options "SAMEORIGIN"
+  Header set Accept-Encoding "gzip, compress, br"
 </IfModule>
 
 # Disable directory browsing
@@ -46,3 +47,4 @@ AddType audio/mpeg .mp3
 AddType audio/ogg .ogg
 AddType audio/wav .wav
 AddType audio/flac .flac
+

@@ -19,13 +19,13 @@ async function preloadResources(resources, cacheName) {
             throw new Error(`Failed to fetch ${resource}: ${headResponse.status} ${headResponse.statusText}`);
           }
 
-          const response = await fetch(resource, { mode: 'cors', cache: 'no-store' });
+          const response = await fetch(resource, { mode: 'cors', cache: 'force-cache' });
           if (!response.ok) {
             throw new Error(`Failed to fetch ${resource}: ${response.status} ${response.statusText}`);
           }
           
           await cache.put(resource, response);
-          //console.log(`${resource} preloaded into ${cacheName}`); // Uncomment for debugging
+          if (config.debugger) console.log(`${resource} preloaded into ${cacheName}`);
         }
       } catch (fetchError) {
         console.error(`Error fetching resource ${resource}:`, fetchError);

@@ -10,8 +10,7 @@ import { config } from './OpenSourcePlayer.js';
 export let mouseMoveTimer;
 
 export function handleMouseMove(video, videoControls) {
-  if (!video || !videoControls) return;
-  if (!config.mouseEvent) return;
+  if (!video || !videoControls || !config.mouseEvent || video.tagName === 'AUDIO') return;
 
   showControls(video, videoControls);
   clearTimeout(mouseMoveTimer);
@@ -27,8 +26,7 @@ export function showControls(video, videoControls) {
 }
 
 export function hideControls(video, videoControls) {
-  if (!video || !videoControls) return;
-  if (!config.mouseEvent) return;
+  if (!video || !videoControls || !config.mouseEvent || video.tagName === 'AUDIO') return;
 
   if (!video.paused) {
     videoControls.style.opacity = "0";
