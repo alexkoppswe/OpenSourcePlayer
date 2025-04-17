@@ -4,19 +4,20 @@ A customizable and feature-rich media player for web applications. Without any d
 
 ## 🚀 Features
 
-- **Video and Audio Playback**: Supports video and audio with respective html tags(Works best for video).
+- **Video and Audio Playback**: Supports video and audio with respective html tags (Works best for video).
 - **Subtitles Support**: Easily add and manage subtitles via the `data-subtitle-src` attribute in the video tag.
 - **Modular**
-- **Addons**
 - **Context Menu**
 - **Picture-in-Picture Mode**
 - **Fullscreen Mode**
-- **Cinematic Mode**: Darkense the page background.
+- **Cinematic Mode**: Darkens the page background.
 - **Settings Menu**: Customizable settings.
+- **Addons**: (Javascript files enabled via config)
 - Svg icons or unicode icons as fallback.
 
 ## Images
-![osp](https://github.com/user-attachments/assets/9017d4ff-838a-49d2-ae00-fc01f181b530)
+![show](https://github.com/user-attachments/assets/04ec3ab0-eb2b-401a-924e-209732c358ea)
+
 
 ## 🛠️ Usage
 
@@ -34,7 +35,7 @@ A customizable and feature-rich media player for web applications. Without any d
 ```
 3. **Initialize the player in JavaScript**
 ```javascript
-import { initializePlayer } from './modules/OpenSourcePlayer.js';
+import { initializePlayer } from './js/modules/OpenSourcePlayer.js';
 
 document.addEventListener('DOMContentLoaded', () => {
   initializePlayer();
@@ -45,18 +46,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
 ### Configuration
 
-Customize the player by modifying addons in `modules/OpenSourcePlayer.js`:
+Customize the player by modifying addons in `js/modules/OpenSourcePlayer.js`:
 
 ```javascript
 const config = {
-  usePreload: true,
-  mouseEvent: true,
-  useSvgIcons: true,
-  useMediaSource: false,
-  useSubtitles: true,
-  useSettings: true,
-  useContextMenu: true,
-  useVerticalVidFill: true
+  usePreload: true,
+  mouseEvent: true,
+  useSvgIcons: true,
+  useMediaSource: false,
+  useSubtitles: true,
+  useSettings: true,
+  useContextMenu: true,
+  useVerticalVidFill: true,
+  useCinematicMode: true
 };
 ```
 
@@ -70,9 +72,9 @@ To add subtitles, include the `data-subtitle-src` attribute in the video tag:
 
 ### Changeing icons
 
-Set each icons in `controls.js > svgIcons` from a singe icons.svg file.
+Set each icons in `controls.js -> svgIcons` from a singe icons.svg file.
 
-**Currently using 'Streamline Remix'**
+**Currently using 'Streamline Remix' icons**
 
 ## 🤝 Contributing
 
