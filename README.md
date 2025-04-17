@@ -58,7 +58,9 @@ const config = {
   useSettings: true,
   useContextMenu: true,
   useVerticalVidFill: true,
-  useCinematicMode: true
+  useCinematicMode: true,
+  useFastForward: true,
+  debugger: false
 };
 ```
 
