@@ -80,7 +80,9 @@ Set each icons in `controls.js -> svgIcons` from a singe icons.svg file.
 
 ## 🤝 Contributing
 
-Contributions are welcome!
+Contributions are welcome just submit a pull request or donate a coffee.
+
+<a href='https://ko-fi.com/X8X11DTGJQ' target='_blank'><img height='36' style='border:0px;height:36px;' src='https://storage.ko-fi.com/cdn/kofi6.png?v=6' border='0' alt='Buy Me a Coffee at ko-fi.com' /></a>
 
 ## 📄 License
 
