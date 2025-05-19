@@ -1,3 +1,5 @@
+# Moved to https://github.com/280studios/opensourceplayer
+
 # 🎬 Open Source Media Player
 
 A customizable and feature-rich media player for web applications. Without any dependencies and modular design.
